@@ -1,0 +1,71 @@
+---
+title: "siantest"
+format: html
+---
+
+```{r}
+library(tidyverse)
+
+damage_report <- read_csv("hw05-data/Damage Reports/mc1-reports-data.csv")
+
+mobile_sensor <- read_csv("hw05-data/Sensor Data and Maps/MobileSensorReadings.csv")
+
+static_sensor_location <- read_csv("hw05-data/Sensor Data and Maps/StaticSensorLocations.csv")
+
+static_sensor_reading <- read_csv("hw05-data/Sensor Data and Maps/StaticSensorReadings.csv")
+
+yint <- read_csv("hw05-data/Yint Social Media Data/Yint.csv")
+```
+
+
+```{r}
+library(sf)
+
+# read in the data: 
+himark <- st_read("hw05-data/Sensor Data and Maps/StHimarkNeighborhoodShapefiles/StHimark.shp")
+
+library(ggplot2)
+
+
+#custom_crs <- "+proj=utm +zone=11 +datum=WGS84 +units=m +no_defs"
+
+
+sensor_sf <- st_as_sf(static_sensor_location, coords = c("Long", "Lat"), crs = 4326)
+st_as_sf(himark, 4326)
+
+ggplot() +
+  geom_sf(data = sthimark, size = 1.5, color = "black", fill = "light grey") + 
+  geom_sf(data = sensor_sf, size = 2)
+
+  
+```
+
+```{r}
+static_sensor_reading$Timestamp <- as.POSIXct(static_sensor_reading$Timestamp, format = "%Y-%m-%d- %H:%M:%OS")
+
+test <- static_sensor_reading |>
+  filter(Timestamp == "2020-04-06 00:00:00" | Timestamp == "2020-04-09 10:52:35")
+
+complete_sensor <- inner_join(static_sensor_location, test, by = c("Sensor-id" = "Sensor-id"))
+
+library(plotly)
+
+sensor_sf <- st_as_sf(complete_sensor, coords = c("Long", "Lat"), crs = 4326)
+st_as_sf(himark, 4326)
+
+g <- ggplot() +
+  geom_sf(data = sthimark, size = 1.5, color = "black", fill = "light grey") + 
+  geom_sf(data = sensor_sf, aes(frame = Timestamp, size = Value, fill = Value))
+
+ #ggplotly(g)
+
+ 
+ 
+fig <- ggplotly(g, tooltip = c("Sensor-id", "Value", "Timestamp"))  |>
+  plotly_build()
+
+
+
+fig
+```
+
