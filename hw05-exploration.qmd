@@ -1,0 +1,19 @@
+---
+title: "hw5-exploration"
+format: html
+---
+
+```{r}
+library(tidyverse)
+
+damage_report <- read_csv("hw05-data/Damage Reports/mc1-reports-data.csv")
+
+mobile_sensor <- read_csv("hw05-data/Sensor Data and Maps/MobileSensorReadings.csv")
+
+static_sensor_location <- read_csv("hw05-data/Sensor Data and Maps/StaticSensorLocations.csv")
+
+static_sensor_reading <- read_csv("hw05-data/Sensor Data and Maps/StaticSensorReadings.csv")
+
+yint <- read_csv("hw05-data/Yint Social Media Data/Yint.csv")
+```
+
