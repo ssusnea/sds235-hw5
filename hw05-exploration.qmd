@@ -17,18 +17,3 @@ static_sensor_reading <- read_csv("hw05-data/Sensor Data and Maps/StaticSensorRe
 yint <- read_csv("hw05-data/Yint Social Media Data/Yint.csv")
 ```
 
-
-```{r}
-library(sf)
-
-# read in the data: 
-sthimark <- st_read("hw05-data/Sensor Data and Maps/StHimarkNeighborhoodShapefiles/StHimark.shp")
-
-library(ggplot2)
-
-ggplot() + 
-  geom_sf(data = sthimark, size = 1.5, color = "black", fill = "light grey") + 
-  ggtitle("St Himark") + 
-  coord_sf()
-```
-
