@@ -10,9 +10,7 @@ damage_report <- read_csv("hw05-data/Damage Reports/mc1-reports-data.csv")
 
 mobile_sensor <- read_csv("hw05-data/Sensor Data and Maps/MobileSensorReadings.csv")
 
-static_sensor_location <- read_csv("hw05-data/Sensor Data and Maps/StaticSensorLocations.csv")
 
-static_sensor_reading <- read_csv("hw05-data/Sensor Data and Maps/StaticSensorReadings.csv")
 
 yint <- read_csv("hw05-data/Yint Social Media Data/Yint.csv")
 ```
@@ -40,32 +38,55 @@ ggplot() +
   
 ```
 
+
+
+FINAL VERSION BELOW
 ```{r}
-static_sensor_reading$Timestamp <- as.POSIXct(static_sensor_reading$Timestamp, format = "%Y-%m-%d- %H:%M:%OS")
+library(dplyr)
+library(tidyverse)
 
-test <- static_sensor_reading |>
-  filter(Timestamp == "2020-04-06 00:00:00" | Timestamp == "2020-04-09 10:52:35")
+#reads in data
+static_sensor_location <- read_csv("hw05-data/Sensor Data and Maps/StaticSensorLocations.csv")
+static_sensor_reading <- read_csv("hw05-data/Sensor Data and Maps/StaticSensorReadings.csv")
 
-complete_sensor <- inner_join(static_sensor_location, test, by = c("Sensor-id" = "Sensor-id"))
+#renaming sensorid col
+static_sensor_reading <- rename(static_sensor_reading, sensor_id = 'Sensor-id')
+static_sensor_location <- rename(static_sensor_location, sensor_id = 'Sensor-id')
 
+#changes date formatting
+static_sensor_reading$Timestamp <- as.POSIXct(static_sensor_reading$Timestamp)
+static_sensor_reading$Timestamp <- format(static_sensor_reading$Timestamp,"%Y-%m-%d %H")
+
+
+#makes it so dataframe is by hour instead of min/sec
+complete_static <- static_sensor_reading |>
+  group_by(Timestamp, sensor_id) |>
+  summarize(avg_value = mean(Value)) |>
+  ungroup()
+  
+#joins reading and location col into one sensor dataframe
+complete_static <- inner_join(static_sensor_location, complete_static, by = "sensor_id")
+```
+
+```{r}
+#creates figure using shapefile
 library(plotly)
 
-sensor_sf <- st_as_sf(complete_sensor, coords = c("Long", "Lat"), crs = 4326)
+himark <- st_read("hw05-data/Sensor Data and Maps/StHimarkNeighborhoodShapefiles/StHimark.shp")
+sensor_sf <- st_as_sf(complete_static, coords = c("Long", "Lat"), crs = 4326)
 st_as_sf(himark, 4326)
+
 
 g <- ggplot() +
   geom_sf(data = sthimark, size = 1.5, color = "black", fill = "light grey") + 
-  geom_sf(data = sensor_sf, aes(frame = Timestamp, size = Value, fill = Value))
+  geom_sf(data = sensor_sf, aes(frame = Timestamp, size = avg_value, fill = avg_value))
 
- #ggplotly(g)
 
- 
- 
-fig <- ggplotly(g, tooltip = c("Sensor-id", "Value", "Timestamp"))  |>
+fig <- ggplotly(g, tooltip = c("sensor_id", "avg_value", "Timestamp"))  |>
   plotly_build()
-
 
 
 fig
 ```
+
 
