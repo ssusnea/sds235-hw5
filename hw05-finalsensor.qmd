@@ -94,3 +94,55 @@ fig <- ggplotly(g, tooltip = c("Timestamp", "sensor_id"))  |>
 fig
 ```
 
+
+```{r, echo = FALSe}
+library(lubridate)
+library(tibble)
+library(knitr)
+
+#reads in data
+static_sensor_reading <- read_csv("hw05-data/Sensor Data and Maps/StaticSensorReadings.csv")
+
+
+#renaming sensorid col, remove negative nums
+static_sensor_reading <- rename(static_sensor_reading, sensor_id = 'Sensor-id') |>
+  filter(Value >= 0)
+
+
+#changes date formatting
+static_sensor_reading$Timestamp <- as.POSIXct(static_sensor_reading$Timestamp)
+static_sensor_reading$Timestamp <- format(static_sensor_reading$Timestamp,"%Y-%m-%d %H:%M:%OS")
+
+rad_levels <- static_sensor_reading |>
+  mutate(risk = case_when(
+    Value > 0 & Value <=50 ~ "Normal",
+    Value > 50 & Value <=100 ~ "Elevated",
+    Value > 100 & Value <=300 ~ "Moderate Concern",
+    Value > 300 & Value <=600 ~ "Dangerous",
+    Value > 600 & Value <=1000 ~ "Serious Risk",
+    Value > 1000 ~ "Critical Risk"
+  )) |>
+  mutate(CPM = case_when(
+    Value > 0 & Value <=50 ~ "0 to 50 CPM",
+    Value > 50 & Value <=100 ~ "50 to 100 CPM",
+    Value > 100 & Value <=300 ~ "100 to 300 CPM",
+    Value > 300 & Value <=600 ~ "300 to 600 CPM",
+    Value > 600 & Value <=1000 ~ "600 to 1,000 CPM",
+    Value > 1000 ~ "1,000+ CPM"
+  ))
+
+rad_levels$risk <- factor(rad_levels$risk, levels = c("Normal", "Elevated", "Moderate Concern", "Dangerous", "Serious Risk", "Critical Risk"))
+
+
+rad_levels <- rad_levels |>
+  group_by(risk, CPM) |>
+  summarize(total_seconds = sum(second(Timestamp))) |>
+  mutate(total_minutes = round((total_seconds / 60),2))
+
+colnames(rad_levels) <- c("Risk Level", "CPM Level", "Exposure Duration (secs)", "Exposure Duration (min)")
+
+kable(rad_levels)
+
+```
+
+
