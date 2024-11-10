@@ -8,17 +8,24 @@ library(tidyverse)
 library(plotly)
 library(sf)
 
+#nuclear power plant location
+nuclear_plant <- data.frame(Lat = 0.162679, Long = -119.784825, category = "Nuclear Plant")
+nuclear_sf <- st_as_sf(nuclear_plant, coords = c("Long", "Lat"), crs = 4326)
+
 #creates figure using shapefile
 himark <- st_read("hw05-data/Sensor Data and Maps/StHimarkNeighborhoodShapefiles/StHimark.shp")
 st_as_sf(himark, 4326)
+
 
 #reads in data
 static_sensor_location <- read_csv("hw05-data/Sensor Data and Maps/StaticSensorLocations.csv")
 static_sensor_reading <- read_csv("hw05-data/Sensor Data and Maps/StaticSensorReadings.csv")
 
+
 #renaming sensorid col
 static_sensor_reading <- rename(static_sensor_reading, sensor_id = 'Sensor-id')
 static_sensor_location <- rename(static_sensor_location, sensor_id = 'Sensor-id')
+
 
 #changes date formatting
 static_sensor_reading$Timestamp <- as.POSIXct(static_sensor_reading$Timestamp)
@@ -44,16 +51,19 @@ max_static <- static_sensor_reading |>
 max_static <- inner_join(static_sensor_location, max_static, by = "sensor_id")
 ```
 
+
+
 ```{r, echo = FALSE}
 #displays average value on map
 sensor_sf <- st_as_sf(complete_static, coords = c("Long", "Lat"), crs = 4326)
+
 
 g <- ggplot() +
   geom_sf(data = himark, size = 1.5, color = "black", fill = "light grey") + 
   geom_sf(data = sensor_sf, aes(frame = Timestamp, size = avg_value, fill = avg_value)) +
   scale_fill_viridis_c(limits = c(0, 30)) +
-  scale_frame_
-  labs(title = 'Measured Radiation in St. Himark <br> <sup> Average value per hour from April 6 to April 10, 2020 </sup>',
+  geom_sf(data = nuclear_sf, shape = 18, color = "red") +
+  labs(title = 'Measured Radiation in St. Himark <br> <sup> Average value per hour from April 6 to April 10, 2020 (nuclear plant denoted by red diamond) </sup>',
        fill = "Measured Radiation (cpm)")
 
 
@@ -72,9 +82,9 @@ g <- ggplot() +
   geom_sf(data = himark, size = 1.5, color = "black", fill = "light grey") + 
   geom_sf(data = sensor_sf, aes(frame = Timestamp, size = max_value, fill = max_value)) +
   scale_fill_viridis_c(option = "magma", limits = c(0, 1200)) +
-  labs(title = 'Measured Radiation in St. Himark <br> <sup> Maximum value per hour from April 6 to April 10, 2020 </sup>', 
-       fill = "Measured Radiation (cpm)",
-       caption = "*Includes observations up to May 2024, with the decade ongoing")
+  geom_sf(data = nuclear_sf, shape = 18, color = "blue") +
+  labs(title = 'Measured Radiation in St. Himark <br> <sup> Maximum value per hour from April 6 to April 10, 2020 (nuclear plant denoted by blue diamond) </sup>', 
+       fill = "Measured Radiation (cpm)")
 
 
 fig <- ggplotly(g, tooltip = c("Timestamp", "sensor_id"))  |>
